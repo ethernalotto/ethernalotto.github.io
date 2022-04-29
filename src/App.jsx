@@ -1,0 +1,222 @@
+import {useEffect, useState} from 'react';
+
+import {
+  BrowserRouter as Router,
+  Link,
+  Route,
+  Routes,
+  matchPath,
+  useLocation,
+  useMatch,
+} from 'react-router-dom';
+
+import {Container} from 'react-bootstrap';
+
+import {useWeb3Context} from 'web3-react';
+
+import {Lottery} from '@ethernalotto/client';
+
+import {Article, BlogArticle} from './Articles';
+import {Blog} from './Blog';
+import {ConnectButton, ConnectionProvider, WalletModal} from './Connection';
+import {MenuDropdown} from './Dropdowns';
+import {ModalContainer} from './Modals';
+import {OddsCalculator} from './OddsCalculator';
+import {Jackpot} from './Jackpot';
+import {LotteryContext} from './LotteryContext';
+import {LuckyFrame, ReceiptModal} from './LuckyFrame';
+
+import logoImage from './images/logo.png';
+
+
+const Logo = () => (
+  <Link to="/" className="logo d-flex align-items-center">
+    <img src={logoImage} className="logo__img" alt=""/>
+    <span className="logo__text"><span className="logo__text-colored">Etherna</span>Lotto</span>
+  </Link>
+);
+
+
+const navigationMenuItems = [
+  {
+    caption: 'How to Play',
+    target: '/howtoplay',
+    visible: true,
+  }, {
+    caption: 'Past Draws',
+    target: '/',
+    visible: true,
+  }, {
+    caption: 'Odds',
+    target: '/odds',
+    visible: true,
+  }, {
+    caption: 'Whitepaper',
+    target: '/whitepaper',
+    visible: true,
+  }, {
+    caption: 'Blog',
+    target: '/blog',
+    visible: true,
+  }, {
+    caption: 'Blog',
+    target: '/blog/:id',
+    visible: false,
+  }, {
+    caption: 'Partners',
+    target: '/partners',
+    visible: true,
+  },
+];
+
+
+const NavigationMenuItem = ({caption, target}) => {
+  const match = useMatch(target);
+  return (
+    <li className={`top-menu__item ${match && 'top-menu__item--active'}`}>
+      <Link to={target} className="top-menu__link">
+        <span className="top-menu__text-el">{caption}</span>
+        <span className="top-menu__line"></span>
+      </Link>
+    </li>
+  );
+};
+
+
+const NavigationMenu = () => (
+  <div className="d-none d-lg-block">
+    <ul className="top-menu">
+      {navigationMenuItems
+          .filter(({visible}) => visible)
+          .map(({caption, target}, index) => (
+            <NavigationMenuItem key={index} caption={caption} target={target}/>
+          ))
+      }
+    </ul>
+  </div>
+);
+
+
+const DropdownNavigationMenu = () => {
+  const location = useLocation();
+  const matches = navigationMenuItems
+      .map(({caption, target}) => ({
+        caption: caption,
+        match: matchPath({
+          path: target,
+          caseSensitive: true,
+          end: true,
+        }, location.pathname),
+      }))
+      .filter(({match}) => !!match);
+  return (
+    <MenuDropdown type="menu" text={matches[0].caption}>
+      {navigationMenuItems
+          .filter(({visible}) => visible)
+          .map(({caption, target}, index) => (
+            <MenuDropdown.Item key={index} text={caption} target={target}/>
+          ))
+      }
+    </MenuDropdown>
+  );
+};
+
+
+const MainSection = () => (
+  <div className="main-section d-flex justify-content-between flex-column flex-md-row">
+    <Jackpot/>
+    <LuckyFrame/>
+  </div>
+);
+
+
+const Header = () => (
+  <div className="header-out">
+    <Container>
+      <div className="header d-flex justify-content-between align-items-start">
+        <Logo/>
+        <NavigationMenu/>
+        <DropdownNavigationMenu/>
+        <ConnectButton/>
+      </div>
+      <MainSection/>
+    </Container>
+  </div>
+);
+
+
+const ArticleHeader = () => (
+  <div className="header-out header-out--article">
+    <Container>
+      <div className="header d-flex justify-content-between align-items-start">
+        <Logo/>
+        <NavigationMenu/>
+        <DropdownNavigationMenu/>
+        <ConnectButton/>
+      </div>
+    </Container>
+  </div>
+);
+
+
+const LotteryContextProvider = ({children}) => {
+  const context = useWeb3Context();
+  const [lottery, setLottery] = useState(null);
+  useEffect(() => {
+    if (context.active) {
+      setLottery(new Lottery({
+        address: process.env.REACT_APP_LOTTERY_ADDRESS,
+        web3: context.library,
+      }));
+    } else {
+      context.setConnector('Network');
+    }
+  }, [context, context.active]);
+  return (
+    <LotteryContext.Provider value={lottery}>
+      {children}
+    </LotteryContext.Provider>
+  );
+};
+
+
+const MainBody = () => (
+  <LotteryContextProvider>
+    <ModalContainer>
+      <div className="main-body">
+        <Routes>
+          <Route exact path="/howtoplay" element={<ArticleHeader/>}/>
+          <Route exact path="/" element={<Header/>}/>
+          <Route exact path="/odds" element={<Header/>}/>
+          <Route exact path="/whitepaper" element={<ArticleHeader/>}/>
+          <Route exact path="/blog" element={<Header/>}/>
+          <Route exact path="/blog/:id" element={<ArticleHeader/>}/>
+          <Route exact path="/partners" element={<ArticleHeader/>}/>
+        </Routes>
+        <Routes>
+          <Route exact path="/howtoplay" element={<Article path="howtoplay"/>}/>
+          <Route exact path="/" element={null}/>
+          <Route exact path="/odds" element={<OddsCalculator/>}/>
+          <Route exact path="/whitepaper" element={<Article path="whitepaper"/>}/>
+          <Route exact path="/blog" element={<Blog/>}/>
+          <Route exact path="/blog/:id" element={<BlogArticle path="a-lottery-is-born"/>}/>
+          <Route exact path="/partners" element={<Article path="partners"/>}/>
+        </Routes>
+      </div>
+      <WalletModal/>
+      <ReceiptModal/>
+    </ModalContainer>
+  </LotteryContextProvider>
+);
+
+
+const App = () => (
+  <Router>
+    <ConnectionProvider>
+      <MainBody/>
+    </ConnectionProvider>
+  </Router>
+);
+
+
+export default App;
