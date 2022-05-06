@@ -14,13 +14,14 @@ import {Container} from 'react-bootstrap';
 
 import {useWeb3Context} from 'web3-react';
 
-import {Lottery} from '@ethernalotto/client';
+import {Lottery} from './Lottery';
 
 import {Article, BlogArticle} from './Articles';
 import {Blog} from './Blog';
 import {ConnectButton, ConnectionProvider, WalletModal} from './Connection';
 import {MenuDropdown} from './Dropdowns';
 import {ModalContainer} from './Modals';
+import {MyTickets} from './MyTickets';
 import {OddsCalculator} from './OddsCalculator';
 import {Jackpot} from './Jackpot';
 import {LotteryContext} from './LotteryContext';
@@ -37,35 +38,47 @@ const Logo = () => (
 );
 
 
-const navigationMenuItems = [
+const navigationMenuItems: {
+  caption: string,
+  target: string,
+  visible: 'always'|'never'|'account',
+}[] = [
   {
     caption: 'How to Play',
     target: '/howtoplay',
-    visible: true,
+    visible: 'always',
   }, {
     caption: 'Past Draws',
     target: '/',
-    visible: true,
+    visible: 'always',
+  }, {
+    caption: 'My Tickets',
+    target: '/tickets',
+    visible: 'account',
   }, {
     caption: 'Odds',
     target: '/odds',
-    visible: true,
+    visible: 'always',
   }, {
     caption: 'Whitepaper',
     target: '/whitepaper',
-    visible: true,
+    visible: 'always',
   }, {
     caption: 'Blog',
     target: '/blog',
-    visible: true,
+    visible: 'always',
   }, {
     caption: 'Blog',
     target: '/blog/:id',
-    visible: false,
+    visible: 'never',
   }, {
     caption: 'Partners',
     target: '/partners',
-    visible: true,
+    visible: 'always',
+  }, {
+    caption: 'Privacy Policy',
+    target: '/pp',
+    visible: 'never',
   },
 ];
 
@@ -83,18 +96,21 @@ const NavigationMenuItem = ({caption, target}) => {
 };
 
 
-const NavigationMenu = () => (
-  <div className="d-none d-lg-block">
-    <ul className="top-menu">
-      {navigationMenuItems
-          .filter(({visible}) => visible)
-          .map(({caption, target}, index) => (
-            <NavigationMenuItem key={index} caption={caption} target={target}/>
-          ))
-      }
-    </ul>
-  </div>
-);
+const NavigationMenu = () => {
+  const {account} = useWeb3Context();
+  return (
+    <div className="d-none d-lg-block">
+      <ul className="top-menu">
+        {navigationMenuItems
+            .filter(({visible}) => visible === 'always' || (visible === 'account' && account))
+            .map(({caption, target}, index) => (
+              <NavigationMenuItem key={index} caption={caption} target={target}/>
+            ))
+        }
+      </ul>
+    </div>
+  );
+};
 
 
 const DropdownNavigationMenu = () => {
@@ -109,10 +125,11 @@ const DropdownNavigationMenu = () => {
         }, location.pathname),
       }))
       .filter(({match}) => !!match);
+  const {account} = useWeb3Context();
   return (
     <MenuDropdown type="menu" text={matches[0].caption}>
       {navigationMenuItems
-          .filter(({visible}) => visible)
+          .filter(({visible}) => visible === 'always' || (visible === 'account' && account))
           .map(({caption, target}, index) => (
             <MenuDropdown.Item key={index} text={caption} target={target}/>
           ))
@@ -165,8 +182,9 @@ const LotteryContextProvider = ({children}) => {
   useEffect(() => {
     if (context.active) {
       setLottery(new Lottery({
-        address: process.env.REACT_APP_LOTTERY_ADDRESS,
         web3: context.library,
+        address: process.env.REACT_APP_LOTTERY_ADDRESS,
+        deployBlock: parseInt(process.env.REACT_APP_LOTTERY_DEPLOY_BLOCK, 10),
       }));
     } else {
       context.setConnector('Network');
@@ -187,20 +205,24 @@ const MainBody = () => (
         <Routes>
           <Route exact path="/howtoplay" element={<ArticleHeader/>}/>
           <Route exact path="/" element={<Header/>}/>
+          <Route exact path="/tickets" element={<Header/>}/>
           <Route exact path="/odds" element={<Header/>}/>
           <Route exact path="/whitepaper" element={<ArticleHeader/>}/>
           <Route exact path="/blog" element={<Header/>}/>
           <Route exact path="/blog/:id" element={<ArticleHeader/>}/>
           <Route exact path="/partners" element={<ArticleHeader/>}/>
+          <Route exact path="/pp" element={<ArticleHeader/>}/>
         </Routes>
         <Routes>
           <Route exact path="/howtoplay" element={<Article path="howtoplay"/>}/>
           <Route exact path="/" element={null}/>
+          <Route exact path="/tickets" element={<MyTickets/>}/>
           <Route exact path="/odds" element={<OddsCalculator/>}/>
           <Route exact path="/whitepaper" element={<Article path="whitepaper"/>}/>
           <Route exact path="/blog" element={<Blog/>}/>
           <Route exact path="/blog/:id" element={<BlogArticle path="a-lottery-is-born"/>}/>
           <Route exact path="/partners" element={<Article path="partners"/>}/>
+          <Route exact path="/pp" element={<Article path="pp"/>}/>
         </Routes>
       </div>
       <WalletModal/>
