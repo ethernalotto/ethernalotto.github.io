@@ -586,7 +586,7 @@ export class Lottery {
 
   private async _getBlock(numberOrHash?: number|string): Promise<BlockHeader> {
     if (!numberOrHash && numberOrHash !== 0) {
-      const block = await this._web3.eth.getBlock();
+      const block = await this._web3.eth.getBlock('latest');
       this._blockCache[block.number] = block;
       this._blockCache[block.hash] = block;
       return block;
@@ -622,10 +622,12 @@ export class Lottery {
   {
     const topics = [
       this._web3.eth.abi.encodeEventSignature(Lottery.DRAW_EVENT_ABI),
-      this._web3.eth.abi.encodeParameter('round', round),
+      this._web3.eth.abi.encodeParameter('uint', round),
     ];
-    const guess = min.blockNumber + Math.floor((max.blockNumber - min.blockNumber) *
-        (round - min.round) / (max.round - min.round));
+    const guess = max.round > min.round ?
+        min.blockNumber + Math.floor((max.blockNumber - min.blockNumber) * (round - min.round) /
+            (max.round - min.round)) :
+        min.blockNumber;
     const halfFetchSize = Lottery._MAX_LOG_FETCH_SIZE >>> 1;
     let toBlock = Math.min(guess + halfFetchSize, max.blockNumber);
     while (toBlock <= max.blockNumber) {
@@ -654,7 +656,7 @@ export class Lottery {
       round: 0,
     };
     let j = cache.length;
-    const [{number: currentBlockNumber}, currentRound] = Promise.all([
+    const [{number: currentBlockNumber}, currentRound] = await Promise.all([
       this._getBlock(),
       this.getCurrentRound(),
     ]);
@@ -685,6 +687,17 @@ export class Lottery {
     return draw;
   }
 
+  private subscribeToDraw(callback: (draw: Draw) => any): LotterySubscription<Log> {
+    return new LotterySubscription<Log>(this._web3.eth.subscribe('logs', {
+      address: this._address,
+      topics: [this._web3.eth.abi.encodeEventSignature(Lottery.DRAW_EVENT_ABI)],
+    }, async (error, log) => {
+      if (!error) {
+        callback(await this._parseDraw(log));
+      }
+    }));
+  }
+
   private async _parseTicket(log: Log): Promise<Ticket> {
     const block = await this._getBlock(log.blockHash);
     const data = this._web3.eth.abi.decodeLog(
@@ -703,19 +716,24 @@ export class Lottery {
     };
   }
 
-  private async _fetchTickets(account: string, latestBlock: number): Promise<Ticket[]> {
-    const logs = await this._web3.eth.getPastLogs({
-      fromBlock: latestBlock - Lottery._MAX_LOG_FETCH_SIZE,
-      toBlock: latestBlock,
-      address: this._address,
-      topics: [
-        this._web3.eth.abi.encodeEventSignature(Lottery.TICKET_EVENT_ABI),
-        /*round=*/null,
-        this._web3.eth.abi.encodeParameter('address', account),
-      ],
-    });
-    const tickets = await Promise.all(logs.map(log => this._parseTicket(log)));
-    return tickets.sort((ticket1, ticket2) => ticket2.date - ticket1.date);
+  private async _fetchTickets(
+      account: string, fromBlock: number, toBlock: number): Promise<Ticket[]>
+  {
+    let tickets: Ticket[] = [];
+    for (let block = toBlock; block >= fromBlock; block -= Lottery._MAX_LOG_FETCH_SIZE) {
+      const logs = await this._web3.eth.getPastLogs({
+        fromBlock: toBlock - Lottery._MAX_LOG_FETCH_SIZE,
+        toBlock: toBlock,
+        address: this._address,
+        topics: [
+          this._web3.eth.abi.encodeEventSignature(Lottery.TICKET_EVENT_ABI),
+          /*round=*/null,
+          this._web3.eth.abi.encodeParameter('address', account),
+        ],
+      });
+      tickets = tickets.concat(await Promise.all(logs.map(log => this._parseTicket(log))));
+    }
+    return tickets;
   }
 
   public async getTickets(account: string, round?: number): Promise<Ticket[]> {
@@ -730,10 +748,29 @@ export class Lottery {
     if (!this._ticketCache[account]) {
       this._ticketCache[account] = new TicketCache(currentBlockNumber);
     }
-    const cache = this._ticketCache[account];
-    if (!cache.tickets.length) {
-      cache.tickets = await this._fetchTickets(account, currentBlockNumber);
+    const draw = await this.getDraw(round);
+    const toBlock = draw ? draw.receipt.blockNumber : currentBlockNumber;
+    const fromBlock = await (async () => {
+      if (round > 0) {
+        const previousDraw = await this.getDraw(round - 1);
+        if (previousDraw) {
+          return previousDraw.receipt.blockNumber;
+        }
+      }
+      return this._deployBlock;
+    })();
+    const cache = this._ticketCache;
+    if (fromBlock <= cache.previousBlock) {
+      cache.tickets = cache.tickets.concat(
+          await this._fetchTickets(account, fromBlock, cache.previousBlock));
+      cache.previousBlock = fromBlock - 1;
     }
-    return cache.tickets;
+    if (toBlock >= cache.nextBlock) {
+      cache.tickets = cache.tickets.concat(
+          await this._fetchTickets(account, cache.nextBlock, toBlock));
+      cache.nextBlock = toBlock + 1;
+    }
+    cache.tickets.sort((ticket1, ticket2) => ticket2.date - ticket1.date);
+    return cache.tickets.filter(ticket => ticket.round === round);
   }
 }
