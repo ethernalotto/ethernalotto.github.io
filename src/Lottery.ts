@@ -39,11 +39,6 @@ export interface Draw {
   receipt: Receipt;
 }
 
-interface DrawSearchBoundary {
-  blockNumber: number;
-  round: number;
-}
-
 
 export interface Ticket {
   date: Date;
@@ -51,24 +46,6 @@ export interface Ticket {
   player: string;
   numbers: number[];
   receipt: Receipt;
-}
-
-
-// Cached tickets for a given account.
-class TicketCache {
-  // Invariant: all blocks between previousBlock and nextBlock exclusive have already been queried
-  // and all detected tickets are stored in the _tickets array.
-  public previousBlock: number;
-  public nextBlock: number;
-
-  // Tickets are ordered from newest to oldest based on transaction block timestamp. If a user
-  // bought more than one ticket in the same block, their order is undefined.
-  public readonly tickets: Ticket[] = [];
-
-  public constructor(currentBlockNumber: number) {
-    this._previousBlock = currentBlockNumber;
-    this._nextBlock = currentBlockNumber;
-  }
 }
 
 
@@ -491,16 +468,10 @@ export class Lottery {
     "type": "event"
   };
 
-  private static readonly _MAX_LOG_FETCH_SIZE = 1000;
-
   private readonly _address: string;
   private readonly _web3: Web3;
   private readonly _contract: Contract;
   private readonly _deployBlock: number;
-
-  private readonly _blockCache: {[numberOrHash: number|string]: BlockHeader} = Object.create(null);
-  private readonly _drawCache: Draw[] = [];
-  private readonly _ticketCache: {[account: string]: TicketCache} = Object.create(null);
 
   public constructor(options: Options) {
     if (!options.address) {
@@ -584,21 +555,6 @@ export class Lottery {
     }
   }
 
-  private async _getBlock(numberOrHash?: number|string): Promise<BlockHeader> {
-    if (!numberOrHash && numberOrHash !== 0) {
-      const block = await this._web3.eth.getBlock('latest');
-      this._blockCache[block.number] = block;
-      this._blockCache[block.hash] = block;
-      return block;
-    }
-    if (!this._blockCache[numberOrHash]) {
-      const block = await this._web3.eth.getBlock(numberOrHash);
-      this._blockCache[block.number] = block;
-      this._blockCache[block.hash] = block;
-    }
-    return this._blockCache[numberOrHash];
-  }
-
   private async _parseDraw(log: Log): Promise<Draw> {
     const block = await this._getBlock(log.blockHash);
     const data = this._web3.eth.abi.decodeLog(
@@ -617,74 +573,12 @@ export class Lottery {
     };
   }
 
-  private async _searchDraw(
-      round: number, min: DrawSearchBoundary, max: DrawSearchBoundary): Promise<Draw|null>
-  {
-    const topics = [
-      this._web3.eth.abi.encodeEventSignature(Lottery.DRAW_EVENT_ABI),
-      this._web3.eth.abi.encodeParameter('uint', round),
-    ];
-    const guess = max.round > min.round ?
-        min.blockNumber + Math.floor((max.blockNumber - min.blockNumber) * (round - min.round) /
-            (max.round - min.round)) :
-        min.blockNumber;
-    const halfFetchSize = Lottery._MAX_LOG_FETCH_SIZE >>> 1;
-    let toBlock = Math.min(guess + halfFetchSize, max.blockNumber);
-    while (toBlock <= max.blockNumber) {
-      const logs = await this._web3.eth.getPastLogs({
-        fromBlock: toBlock - Lottery._MAX_LOG_FETCH_SIZE,
-        toBlock: toBlock,
-        address: this._address,
-        topics: topics,
-      });
-      if (logs.length > 0) {
-        return await this._parseDraw(logs[0]);
-      }
-      toBlock = Math.min(toBlock + Lottery._MAX_LOG_FETCH_SIZE, max.blockNumber);
-    }
-    return this._searchDraw(round, min, {
-      blockNumber: guess - halfFetchSize,
-      round: max.round,
-    });
-  }
-
-  private async getDraw(round: number): Promise<Draw> {
-    const cache = this._drawCache;
-    let i = 0;
-    let min: DrawSearchBoundary = {
-      blockNumber: this._deployBlock,
-      round: 0,
-    };
-    let j = cache.length;
-    const [{number: currentBlockNumber}, currentRound] = await Promise.all([
-      this._getBlock(),
-      this.getCurrentRound(),
-    ]);
-    let max: DrawSearchBoundary = {
-      blockNumber: currentBlockNumber,
-      round: currentRound,
-    };
-    while (j > i) {
-      const k = i + ((j - i) >>> 1);
-      const draw = cache[k];
-      if (round < draw.round) {
-        j = k;
-        max.blockNumber = draw.receipt.blockNumber;
-        max.round = draw.round;
-      } else if (round > draw.round) {
-        i = k + 1;
-        min.blockNumber = draw.receipt.blockNumber;
-        min.round = draw.round;
-      } else {
-        return draw;
-      }
-    }
-    const draw = await this._searchDraw(round, min, max);
-    if (draw) {
-      this._drawCache.push(draw);
-      this._drawCache.sort((draw1, draw2) => draw1.round - draw2.round);
-    }
-    return draw;
+  public async getDraws(): Promise<Draw[]> {
+    return (await this._web3.eth.getPastLogs({
+      fromBlock: this._deployBlock,
+      address: this._address,
+      topics: [this._web3.eth.abi.encodeEventSignature(Lottery.DRAW_EVENT_ABI)],
+    })).map(log => this._parseDraw(log));
   }
 
   private subscribeToDraw(callback: (draw: Draw) => any): LotterySubscription<Log> {
@@ -716,26 +610,6 @@ export class Lottery {
     };
   }
 
-  private async _fetchTickets(
-      account: string, fromBlock: number, toBlock: number): Promise<Ticket[]>
-  {
-    let tickets: Ticket[] = [];
-    for (let block = toBlock; block >= fromBlock; block -= Lottery._MAX_LOG_FETCH_SIZE) {
-      const logs = await this._web3.eth.getPastLogs({
-        fromBlock: toBlock - Lottery._MAX_LOG_FETCH_SIZE,
-        toBlock: toBlock,
-        address: this._address,
-        topics: [
-          this._web3.eth.abi.encodeEventSignature(Lottery.TICKET_EVENT_ABI),
-          /*round=*/null,
-          this._web3.eth.abi.encodeParameter('address', account),
-        ],
-      });
-      tickets = tickets.concat(await Promise.all(logs.map(log => this._parseTicket(log))));
-    }
-    return tickets;
-  }
-
   public async getTickets(account: string, round?: number): Promise<Ticket[]> {
     const currentRound = await this.getCurrentRound();
     if (!round && round !== 0) {
@@ -744,33 +618,14 @@ export class Lottery {
     if (round < 0) {
       round = currentRound - round;
     }
-    const {number: currentBlockNumber} = await this._getBlock();
-    if (!this._ticketCache[account]) {
-      this._ticketCache[account] = new TicketCache(currentBlockNumber);
-    }
-    const draw = await this.getDraw(round);
-    const toBlock = draw ? draw.receipt.blockNumber : currentBlockNumber;
-    const fromBlock = await (async () => {
-      if (round > 0) {
-        const previousDraw = await this.getDraw(round - 1);
-        if (previousDraw) {
-          return previousDraw.receipt.blockNumber;
-        }
-      }
-      return this._deployBlock;
-    })();
-    const cache = this._ticketCache;
-    if (fromBlock <= cache.previousBlock) {
-      cache.tickets = cache.tickets.concat(
-          await this._fetchTickets(account, fromBlock, cache.previousBlock));
-      cache.previousBlock = fromBlock - 1;
-    }
-    if (toBlock >= cache.nextBlock) {
-      cache.tickets = cache.tickets.concat(
-          await this._fetchTickets(account, cache.nextBlock, toBlock));
-      cache.nextBlock = toBlock + 1;
-    }
-    cache.tickets.sort((ticket1, ticket2) => ticket2.date - ticket1.date);
-    return cache.tickets.filter(ticket => ticket.round === round);
+    return (await this._web3.eth.getPastLogs({
+      fromBlock: this._deployBlock,
+      address: this._address,
+      topics: [
+        this._web3.eth.abi.encodeEventSignature(Lottery.TICKET_EVENT_ABI),
+        this._web3.eth.abi.encodeParameter('uint', round),
+        this._web3.eth.abi.encodeParameter('address', account),
+      ],
+    })).map(log => this._parseTicket(log));
   }
 }
