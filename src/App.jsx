@@ -184,7 +184,6 @@ const LotteryContextProvider = ({children}) => {
       setLottery(new Lottery({
         web3: context.library,
         address: process.env.REACT_APP_LOTTERY_ADDRESS,
-        deployBlock: parseInt(process.env.REACT_APP_LOTTERY_DEPLOY_BLOCK, 10),
       }));
     } else {
       context.setConnector('Network');

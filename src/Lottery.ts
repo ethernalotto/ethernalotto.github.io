@@ -1,5 +1,5 @@
 import Web3 from 'web3';
-import {Log, provider} from 'web3-core';
+import {provider} from 'web3-core';
 import {Subscription} from 'web3-core-subscriptions';
 import {BlockHeader} from 'web3-eth';
 import {Contract} from 'web3-eth-contract';
@@ -10,7 +10,6 @@ export interface Options {
   web3?: Web3;
   provider?: provider;
   address: string;
-  deployBlock: number;
 }
 
 
@@ -30,22 +29,18 @@ export interface Receipt {
   blockNumber: number;
 }
 
+export interface Ticket {
+  date: Date;
+  round: number;
+  player: string;
+  numbers: number[];
+}
 
 export interface Draw {
   date: Date;
   round: number;
   numbers: number[];
   jackpot: string;
-  receipt: Receipt;
-}
-
-
-export interface Ticket {
-  date: Date;
-  round: number;
-  player: string;
-  numbers: number[];
-  receipt: Receipt;
 }
 
 
@@ -218,19 +213,70 @@ export class Lottery {
     },
     {
       "inputs": [],
-      "name": "closeRound",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [],
       "name": "currentRound",
       "outputs": [
         {
           "internalType": "uint64",
           "name": "",
           "type": "uint64"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "name": "drawnNumbers",
+      "outputs": [
+        {
+          "internalType": "uint8",
+          "name": "",
+          "type": "uint8"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint64",
+          "name": "round",
+          "type": "uint64"
+        },
+        {
+          "internalType": "uint64",
+          "name": "ticketId",
+          "type": "uint64"
+        }
+      ],
+      "name": "getTicket",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "player",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "timestamp",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint8[]",
+          "name": "numbers",
+          "type": "uint8[]"
         }
       ],
       "stateMutability": "view",
@@ -258,17 +304,22 @@ export class Lottery {
     {
       "inputs": [
         {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
+          "internalType": "address",
+          "name": "player",
+          "type": "address"
+        },
+        {
+          "internalType": "uint64",
+          "name": "round",
+          "type": "uint64"
         }
       ],
-      "name": "numbers",
+      "name": "getTickets",
       "outputs": [
         {
-          "internalType": "uint8",
-          "name": "",
-          "type": "uint8"
+          "internalType": "uint64[]",
+          "name": "ids",
+          "type": "uint64[]"
         }
       ],
       "stateMutability": "view",
@@ -362,6 +413,11 @@ export class Lottery {
           "internalType": "uint256",
           "name": "",
           "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
         }
       ],
       "name": "ticketsByNumber",
@@ -369,6 +425,40 @@ export class Lottery {
         {
           "internalType": "uint64",
           "name": "",
+          "type": "uint64"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "name": "ticketsByPlayer",
+      "outputs": [
+        {
+          "internalType": "uint64",
+          "name": "id",
+          "type": "uint64"
+        },
+        {
+          "internalType": "uint64",
+          "name": "round",
+          "type": "uint64"
+        },
+        {
+          "internalType": "uint64",
+          "name": "timestamp",
           "type": "uint64"
         }
       ],
@@ -390,88 +480,9 @@ export class Lottery {
     }
   ];
 
-  public static readonly TICKET_EVENT_ABI: AbiItem = {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "uint256",
-        "name": "round",
-        "type": "uint256"
-      },
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "player",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint8[]",
-        "name": "numbers",
-        "type": "uint8[]"
-      }
-    ],
-    "name": "Ticket",
-    "type": "event"
-  };
-
-  public static readonly DRAW_EVENT_ABI: AbiItem = {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "uint256",
-        "name": "round",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint8[6]",
-        "name": "numbers",
-        "type": "uint8[6]"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "currentBalance",
-        "type": "uint256"
-      }
-    ],
-    "name": "Draw",
-    "type": "event"
-  };
-
-  public static readonly CLOSE_ROUND_EVENT_ABI: AbiItem = {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "uint256",
-        "name": "round",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint64[5]",
-        "name": "numberOfWinningTickets",
-        "type": "uint64[5]"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256[5]",
-        "name": "prizes",
-        "type": "uint256[5]"
-      }
-    ],
-    "name": "CloseRound",
-    "type": "event"
-  };
-
   private readonly _address: string;
   private readonly _web3: Web3;
   private readonly _contract: Contract;
-  private readonly _deployBlock: number;
 
   public constructor(options: Options) {
     if (!options.address) {
@@ -487,7 +498,6 @@ export class Lottery {
       this._web3 = new Web3(options.provider!);
     }
     this._contract = new this._web3.eth.Contract(Lottery.ABI, this._address);
-    this._deployBlock = parseInt(options.deployBlock, 10);
   }
 
   public get address(): string {
@@ -547,67 +557,19 @@ export class Lottery {
   }
 
   public async getDrawnNumbers(): Promise<number[]> {
-    if (await this.isRoundClosing()) {
-      const numbers = (await this._contract.methods.numbers().call()) as string[];
-      return numbers.map(number => parseInt(number, 10));
-    } else {
-      throw new Error('the current round is still open');
+    const state = await this._contract.methods.state().call();
+    if (state !== 2) {
+      throw new Error('the current round is not closing yet');
     }
-  }
-
-  private async _parseDraw(log: Log): Promise<Draw> {
-    const block = await this._getBlock(log.blockHash);
-    const data = this._web3.eth.abi.decodeLog(
-        Lottery.DRAW_EVENT_ABI.inputs, log.data, log.topics.slize(1));
-    return {
-      date: new Date(block.timestamp),
-      round: data.round,
-      numbers: data.numbers,
-      jackpot: data.currentBalance,
-      receipt: {
-        transactionHash: log.transactionHash,
-        transactionIndex: log.transactionIndex,
-        blockHash: block.hash,
-        blockNumber: block.number,
-      },
-    };
-  }
-
-  public async getDraws(): Promise<Draw[]> {
-    return (await this._web3.eth.getPastLogs({
-      fromBlock: this._deployBlock,
-      address: this._address,
-      topics: [this._web3.eth.abi.encodeEventSignature(Lottery.DRAW_EVENT_ABI)],
-    })).map(log => this._parseDraw(log));
-  }
-
-  private subscribeToDraw(callback: (draw: Draw) => any): LotterySubscription<Log> {
-    return new LotterySubscription<Log>(this._web3.eth.subscribe('logs', {
-      address: this._address,
-      topics: [this._web3.eth.abi.encodeEventSignature(Lottery.DRAW_EVENT_ABI)],
-    }, async (error, log) => {
-      if (!error) {
-        callback(await this._parseDraw(log));
-      }
-    }));
-  }
-
-  private async _parseTicket(log: Log): Promise<Ticket> {
-    const block = await this._getBlock(log.blockHash);
-    const data = this._web3.eth.abi.decodeLog(
-        Lottery.TICKET_EVENT_ABI.inputs, log.data, log.topics.slize(1));
-    return {
-      date: new Date(block.timestamp),
-      round: data.round,
-      player: data.player,
-      numbers: data.numbers,
-      receipt: {
-        transactionHash: log.transactionHash,
-        transactionIndex: log.transactionIndex,
-        blockHash: block.hash,
-        blockNumber: block.number,
-      },
-    };
+    const round = await this._contract.methods.currentRound().call();
+    return await Promise.all([
+      this._contract.methods.drawnNumbers(round, 0).call(),
+      this._contract.methods.drawnNumbers(round, 1).call(),
+      this._contract.methods.drawnNumbers(round, 2).call(),
+      this._contract.methods.drawnNumbers(round, 3).call(),
+      this._contract.methods.drawnNumbers(round, 4).call(),
+      this._contract.methods.drawnNumbers(round, 5).call(),
+    ]);
   }
 
   public async getTickets(account: string, round?: number): Promise<Ticket[]> {
@@ -618,14 +580,14 @@ export class Lottery {
     if (round < 0) {
       round = currentRound - round;
     }
-    return (await this._web3.eth.getPastLogs({
-      fromBlock: this._deployBlock,
-      address: this._address,
-      topics: [
-        this._web3.eth.abi.encodeEventSignature(Lottery.TICKET_EVENT_ABI),
-        this._web3.eth.abi.encodeParameter('uint', round),
-        this._web3.eth.abi.encodeParameter('address', account),
-      ],
-    })).map(log => this._parseTicket(log));
+    const ids = await this._contract.methods.getTickets(account, round).call();
+    const data = await Promise.all(ids.map(id =>
+        this._contract.methods.getTicket(round, parseInt(id, 10)).call()));
+    return data.map(({timestamp, numbers}) => ({
+      date: new Date(parseInt(timestamp, 10) * 1000),
+      round: round,
+      player: account,
+      numbers: numbers.map(number => parseInt(number, 10)),
+    }));
   }
 }
