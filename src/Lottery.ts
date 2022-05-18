@@ -102,11 +102,6 @@ export class Lottery {
     return await this._contract.methods.baseTicketPrice().call();
   }
 
-  public async getMaxNumbers(): Promise<number> {
-    const priceMultipliers = await this._contract.methods.priceMultipliers().call();
-    return priceMultipliers.length + 5;
-  }
-
   public async getTicketPrice(numbers: number[]): Promise<string> {
     return await this._contract.methods.getTicketPrice(numbers).call();
   }
