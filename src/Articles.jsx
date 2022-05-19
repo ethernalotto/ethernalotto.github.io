@@ -8,14 +8,17 @@ import ReactMarkdown from 'react-markdown';
 import {unified} from 'unified';
 import gfm from 'remark-gfm';
 import frontmatter from 'remark-frontmatter';
+import rehypeRaw from 'rehype-raw';
 import remarkParse from 'remark-parse';
 import remarkStringify from 'remark-stringify';
 
 import YAML from 'yaml';
 
+import {PartnerStatus} from './PartnerStatus';
+
 
 const components = {
-  a: ({node, children, href, ...props}) => {
+  a: ({children, href, ...props}) => {
     if (/^[^/]+:/.test(href)) {
       // external link
       return (
@@ -29,10 +32,18 @@ const components = {
       );
     }
   },
+  object: ({name}) => {
+    switch (name) {
+    case 'account-status':
+      return (<PartnerStatus/>);
+    default:
+      return null;
+    }
+  },
 };
 
 
-export const Article = ({path}) => {
+export const Article = ({path, children}) => {
   const [markdown, setMarkdown] = useState('');
   const [date, setDate] = useState('');
   const parseFrontMatter = node => {
@@ -71,6 +82,7 @@ export const Article = ({path}) => {
           <article className="article__body text">
             <ReactMarkdown
                 remarkPlugins={[gfm, frontmatter]}
+                rehypePlugins={[rehypeRaw]}
                 components={components}
                 children={markdown}/>
           </article>
