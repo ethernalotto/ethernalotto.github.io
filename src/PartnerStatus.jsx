@@ -21,7 +21,7 @@ const DynamicStatus = ({context: {account, library: web3}, token, controller}) =
       }
       setBalance(balance);
       setShow(true);
-      setUnclaimed(web3.utils.toBN(await controller.methods.getUnclaimedRevenue().call()));
+      setUnclaimed(web3.utils.toBN(await controller.methods.getUnclaimedRevenue(account).call()));
     })();
   }, [account, controller, token, web3]);
   if (!show) {
@@ -37,7 +37,7 @@ const DynamicStatus = ({context: {account, library: web3}, token, controller}) =
       ) : null}
       {(unclaimed && unclaimed.cmp(web3.utils.toBN(0))) ? (
         <p>You have unclaimed fees: {unclaimed.toString()} wei &#8211; <button onClick={async () => {
-          await controller.withdraw(unclaimed).send({from: account});
+          await controller.methods.withdraw(account, unclaimed).send({from: account});
         }}>withdraw</button></p>
       ) : null}
     </>
