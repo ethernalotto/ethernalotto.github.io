@@ -37,7 +37,7 @@ const DynamicStatus = ({context: {account, library: web3}, token, controller}) =
       ) : null}
       {(unclaimed && unclaimed.cmp(web3.utils.toBN(0))) ? (
         <p>You have unclaimed fees: {unclaimed.toString()} wei &#8211; <button onClick={async () => {
-          await controller.methods.withdraw(account, unclaimed).send({from: account});
+          await controller.methods.withdraw(account).send({from: account});
         }}>withdraw</button></p>
       ) : null}
     </>
