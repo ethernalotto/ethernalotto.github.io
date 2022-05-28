@@ -9,7 +9,7 @@ date: 25.04.22
 Hello, world!
 
 Today we are proud to present **EthernaLotto**: a global, decentralized, autonomous, and provably
-fair lottery based on Ethereum*.
+fair lottery based on Ethereum[^1].
 
 Have any numbers stuck with you, lately? Maybe you dreamed them? A fortune teller told you?
 
@@ -20,5 +20,5 @@ Good luck,
 
 Jim on behalf of the EthernaLotto Team
 
-\* If you are new to [Ethereum](https://ethereum.org/) we recommend installing
+[^1]: If you are new to [Ethereum](https://ethereum.org/) we recommend installing
 [MetaMask](https://metamask.io/) to get started. See ["How to Play"](/howtoplay) for details.
