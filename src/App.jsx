@@ -12,6 +12,8 @@ import {
 
 import {Container} from 'react-bootstrap';
 
+import ReactGA from 'react-ga';
+
 import {useWeb3Context} from 'web3-react';
 
 import {Lottery} from './Lottery';
@@ -28,6 +30,10 @@ import {LotteryContext} from './LotteryContext';
 import {LuckyFrame, ReceiptModal} from './LuckyFrame';
 
 import logoImage from './images/logo.png';
+
+
+ReactGA.initialize(process.env.REACT_APP_ANALYTICS_TRACKER);
+ReactGA.pageview(window.location.pathname + window.location.search);
 
 
 const Logo = () => (
