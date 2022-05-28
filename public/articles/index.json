@@ -4,5 +4,11 @@
     "title": "A Lottery Is Born",
     "date": "25.04.22",
     "excerpt": "Hello, world! Today we are proud to present EthernaLotto: a global, decentralized, autonomous, and provably fair lottery based on Ethereum."
+  },
+  {
+    "id": "first-drawing",
+    "title": "First Drawing!",
+    "date": "28.05.22",
+    "excerpt": "It's been more than a month since we published our first update. At that point we though EthernaLotto was pretty much ready to..."
   }
 ]
