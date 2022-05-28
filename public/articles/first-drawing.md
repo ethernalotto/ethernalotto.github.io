@@ -23,7 +23,7 @@ Meanwhile we know it can scale to at least two tickets ([the][ticket1] [ones][ti
 today), because we have just triggered the first drawing! We're proud to announce that the first 6
 lucky numbers are:
 
-TODO
+> 34, 58, 29, 16, 70, 2
 
 (so I didn't win anything.)
 
