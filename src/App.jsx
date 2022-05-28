@@ -69,7 +69,7 @@ const navigationMenuItems: {
     visible: 'always',
   }, {
     caption: 'Blog',
-    target: '/blog/:id',
+    target: '/articles/:id',
     visible: 'never',
   }, {
     caption: 'Partners',
@@ -208,7 +208,7 @@ const MainBody = () => (
           <Route exact path="/odds" element={<Header/>}/>
           <Route exact path="/whitepaper" element={<ArticleHeader/>}/>
           <Route exact path="/blog" element={<Header/>}/>
-          <Route exact path="/blog/:id" element={<ArticleHeader/>}/>
+          <Route exact path="/articles/:id" element={<ArticleHeader/>}/>
           <Route exact path="/partners" element={<ArticleHeader/>}/>
           <Route exact path="/pp" element={<ArticleHeader/>}/>
         </Routes>
@@ -219,7 +219,7 @@ const MainBody = () => (
           <Route exact path="/odds" element={<OddsCalculator/>}/>
           <Route exact path="/whitepaper" element={<Article path="whitepaper"/>}/>
           <Route exact path="/blog" element={<Blog/>}/>
-          <Route exact path="/blog/:id" element={<BlogArticle path="a-lottery-is-born"/>}/>
+          <Route exact path="/articles/:id" element={<BlogArticle/>}/>
           <Route exact path="/partners" element={<Article path="partners"/>}/>
           <Route exact path="/pp" element={<Article path="pp"/>}/>
         </Routes>

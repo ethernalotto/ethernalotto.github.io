@@ -16,6 +16,7 @@ export const Blog = () => {
   useEffect(() => {
     (async () => {
       const newIndex = await loadIndex();
+      newIndex.reverse();
       if (!deepCompare(index, newIndex)) {
         setIndex(newIndex);
       }
@@ -37,7 +38,7 @@ export const Blog = () => {
               <div className="blog-items__title">{title}</div>
               <div className="blog-items__descr">{excerpt}</div>
               <div className="blog-items__button">
-                <Link to={`/blog/${id}`} className="btn btn-details">
+                <Link to={`/articles/${id}`} className="btn btn-details">
                   <span className="btn-details__text">Read More</span>
                   <span className="btn-details__shadow"></span>
                 </Link>

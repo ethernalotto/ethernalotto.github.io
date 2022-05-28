@@ -1,6 +1,5 @@
 ---
 title: How to Play
-date: 25.04.22
 ---
 
 # How to Play

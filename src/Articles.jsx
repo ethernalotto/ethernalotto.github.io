@@ -1,7 +1,7 @@
 import {useEffect, useState} from 'react';
 
 import {Container} from 'react-bootstrap';
-import {Link} from 'react-router-dom';
+import {Link, useParams} from 'react-router-dom';
 
 import ReactMarkdown from 'react-markdown';
 
@@ -93,7 +93,10 @@ export const Article = ({path, children}) => {
 };
 
 
-export const BlogArticle = ({path}) => (<Article path={`articles/${path}`}/>);
+export const BlogArticle = () => {
+  const {id} = useParams();
+  return (<Article path={`articles/${id}`}/>);
+};
 
 
 export async function loadIndex() {
