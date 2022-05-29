@@ -4,6 +4,7 @@ import {useWeb3Context} from 'web3-react';
 
 import {abi as CONTROLLER_ABI} from './Controller.json';
 import {abi as TOKEN_ABI} from './Token.json';
+import {formatBigNumber} from './Utilities';
 
 
 const DynamicStatus = ({context: {account, library: web3}, token, controller}) => {
@@ -33,10 +34,10 @@ const DynamicStatus = ({context: {account, library: web3}, token, controller}) =
       <p>Greetings, esteemed partner!</p>
       <p>You are connected as: <a href={`https://polygonscan.com/address/${account}`} target="_blank" rel="noreferrer">{account}</a></p>
       {balance ? (
-        <p>Your <code>ELOT</code> balance is: {balance.toString()} wei</p>
+        <p>Your <code>ELOT</code> balance is: {formatBigNumber(web3, balance)}</p>
       ) : null}
       {(unclaimed && unclaimed.cmp(web3.utils.toBN(0))) ? (
-        <p>You have unclaimed fees: {unclaimed.toString()} wei &#8211; <button onClick={async () => {
+        <p>You have unclaimed fees: {formatBigNumber(web3, unclaimed)} MATIC &#8211; <button onClick={async () => {
           await controller.methods.withdraw(account).send({from: account});
         }}>withdraw</button></p>
       ) : null}

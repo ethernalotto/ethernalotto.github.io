@@ -1,3 +1,6 @@
+import Web3 from 'web3';
+
+
 export const COMBINATIONS = [
   1,       // 6 numbers
   7,       // 7 numbers
@@ -33,6 +36,15 @@ export function choose(n: number, k: number): number {
   } else {
     return n * choose(n - 1, k - 1) / k;
   }
+}
+
+
+export function formatBigNumber(web3: Web3, value: any): string {
+  const number = web3.utils.toBN(value);
+  const decimals = web3.utils.toBN('1000000000000000000');
+  const integer = number.div(decimals);
+  const fractional = number.mod(decimals);
+  return integer.toString(10) + '.' + fractional.toString(10, 18);
 }
 
 
