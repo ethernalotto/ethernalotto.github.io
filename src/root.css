@@ -9,3 +9,10 @@
 .sr-only {
   display: none;
 }
+
+.whitepaper-frame {
+  display: block;
+  position: absolute;
+  width: 100%;
+  min-height: 100%;
+}

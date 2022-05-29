@@ -199,6 +199,14 @@ const LotteryContextProvider = ({children}) => {
 };
 
 
+const Whitepaper = () => (
+  <iframe
+      title="whitepaper"
+      className="whitepaper-frame"
+      src="draft-whitepaper.pdf"/>
+);
+
+
 const MainBody = () => (
   <LotteryContextProvider>
     <ModalContainer>
@@ -219,7 +227,7 @@ const MainBody = () => (
           <Route exact path="/" element={null}/>
           <Route exact path="/tickets" element={<MyTickets/>}/>
           <Route exact path="/odds" element={<OddsCalculator/>}/>
-          <Route exact path="/whitepaper" element={<Article path="whitepaper"/>}/>
+          <Route exact path="/whitepaper" element={<Whitepaper/>}/>
           <Route exact path="/blog" element={<Blog/>}/>
           <Route exact path="/articles/:id" element={<BlogArticle/>}/>
           <Route exact path="/partners" element={<Article path="partners"/>}/>
