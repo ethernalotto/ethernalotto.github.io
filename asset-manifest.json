@@ -1,8 +1,8 @@
 {
   "files": {
-    "main.css": "/static/css/main.a67f1583.chunk.css",
-    "main.js": "/static/js/main.a45fbfc3.chunk.js",
-    "main.js.map": "/static/js/main.a45fbfc3.chunk.js.map",
+    "main.css": "/static/css/main.0147ff8f.chunk.css",
+    "main.js": "/static/js/main.67e57cc4.chunk.js",
+    "main.js.map": "/static/js/main.67e57cc4.chunk.js.map",
     "runtime-main.js": "/static/js/runtime-main.9e7e2c1b.js",
     "runtime-main.js.map": "/static/js/runtime-main.9e7e2c1b.js.map",
     "static/js/2.d4ceccea.chunk.js": "/static/js/2.d4ceccea.chunk.js",
@@ -10,7 +10,7 @@
     "static/js/3.4b1be478.chunk.js": "/static/js/3.4b1be478.chunk.js",
     "static/js/3.4b1be478.chunk.js.map": "/static/js/3.4b1be478.chunk.js.map",
     "index.html": "/index.html",
-    "static/css/main.a67f1583.chunk.css.map": "/static/css/main.a67f1583.chunk.css.map",
+    "static/css/main.0147ff8f.chunk.css.map": "/static/css/main.0147ff8f.chunk.css.map",
     "static/js/2.d4ceccea.chunk.js.LICENSE.txt": "/static/js/2.d4ceccea.chunk.js.LICENSE.txt",
     "static/media/index.css": "/static/media/oxanium-v6-latin-regular.e15b9665.woff2",
     "static/media/stock.140ad2e4.jpg": "/static/media/stock.140ad2e4.jpg"
@@ -18,7 +18,7 @@
   "entrypoints": [
     "static/js/runtime-main.9e7e2c1b.js",
     "static/js/2.d4ceccea.chunk.js",
-    "static/css/main.a67f1583.chunk.css",
-    "static/js/main.a45fbfc3.chunk.js"
+    "static/css/main.0147ff8f.chunk.css",
+    "static/js/main.67e57cc4.chunk.js"
   ]
 }
