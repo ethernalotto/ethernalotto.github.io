@@ -32,10 +32,6 @@ import {LuckyFrame, ReceiptModal} from './LuckyFrame';
 import logoImage from './images/logo.png';
 
 
-ReactGA.initialize(process.env.REACT_APP_ANALYTICS_TRACKER);
-ReactGA.pageview(window.location.pathname + window.location.search);
-
-
 const Logo = () => (
   <Link to="/" className="logo d-flex align-items-center">
     <img src={logoImage} className="logo__img" alt=""/>
@@ -237,13 +233,19 @@ const MainBody = () => (
 );
 
 
-const App = () => (
-  <Router>
-    <ConnectionProvider>
-      <MainBody/>
-    </ConnectionProvider>
-  </Router>
-);
+const App = () => {
+  useEffect(() => {
+    ReactGA.initialize(process.env.REACT_APP_ANALYTICS_TRACKER);
+    ReactGA.pageview(window.location.pathname + window.location.search);
+  }, []);
+  return (
+    <Router>
+      <ConnectionProvider>
+        <MainBody/>
+      </ConnectionProvider>
+    </Router>
+  );
+};
 
 
 export default App;
