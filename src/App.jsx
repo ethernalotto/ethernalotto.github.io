@@ -25,6 +25,7 @@ import {MenuDropdown} from './Dropdowns';
 import {ModalContainer} from './Modals';
 import {MyTickets} from './MyTickets';
 import {OddsCalculator} from './OddsCalculator';
+import {PastDraws} from './PastDraws';
 import {Jackpot} from './Jackpot';
 import {LotteryContext} from './LotteryContext';
 import {LuckyFrame, ReceiptModal} from './LuckyFrame';
@@ -224,7 +225,7 @@ const MainBody = () => (
         </Routes>
         <Routes>
           <Route exact path="/howtoplay" element={<Article path="howtoplay"/>}/>
-          <Route exact path="/" element={null}/>
+          <Route exact path="/" element={<PastDraws/>}/>
           <Route exact path="/tickets" element={<MyTickets/>}/>
           <Route exact path="/odds" element={<OddsCalculator/>}/>
           <Route exact path="/whitepaper" element={<Whitepaper/>}/>

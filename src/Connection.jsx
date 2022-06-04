@@ -16,10 +16,7 @@ const {InjectedConnector, NetworkOnlyConnector} = Connectors;
 export const ConnectionProvider = ({children}) => (
   <Web3Provider connectors={{
     MetaMask: new InjectedConnector({
-      supportedNetworks: [
-        31337,  // Hardhat
-        137,    // Matic
-      ],
+      supportedNetworks: [parseInt(process.env.REACT_APP_NETWORK_ID, 10)],
     }),
     Network: new NetworkOnlyConnector({
       providerURL: process.env.REACT_APP_RPC_URL,

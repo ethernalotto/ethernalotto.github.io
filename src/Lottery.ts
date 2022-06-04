@@ -42,12 +42,14 @@ export interface Draw {
   date: Date;
   round: number;
   numbers: number[];
-  jackpot: string;
 }
 
 
 export class Lottery {
   public static readonly ABI: AbiItem[] = ABI as AbiTem[];
+
+  private static readonly _FIRST_DRAW_DATE: Date = new Date(parseInt(
+      process.env.REACT_APP_FIRST_DRAW_DATE, 10));
 
   private readonly _address: string;
   private readonly _web3: Web3;
@@ -120,30 +122,22 @@ export class Lottery {
     return await this._contract.methods.state().call() !== 0;
   }
 
-  public async getDrawnNumbers(): Promise<number[]> {
-    const state = await this._contract.methods.state().call();
-    if (state !== 2) {
-      throw new Error('the current round is not closing yet');
-    }
-    const round = await this._contract.methods.currentRound().call();
-    return await Promise.all([
-      this._contract.methods.drawnNumbers(round, 0).call(),
-      this._contract.methods.drawnNumbers(round, 1).call(),
-      this._contract.methods.drawnNumbers(round, 2).call(),
-      this._contract.methods.drawnNumbers(round, 3).call(),
-      this._contract.methods.drawnNumbers(round, 4).call(),
-      this._contract.methods.drawnNumbers(round, 5).call(),
-    ]);
-  }
-
-  public async getTickets(account: string, round?: number): Promise<Ticket[]> {
+  private async sanitizeRoundNumber(round?: number): Promise<number> {
     const currentRound = await this.getCurrentRound();
     if (!round && round !== 0) {
       round = currentRound;
     }
     if (round < 0) {
-      round = currentRound - round;
+      round = currentRound + round;
     }
+    if (round < 0) {
+      throw new Error('invalid round number');
+    }
+    return round;
+  }
+
+  public async getTickets(account: string, round?: number): Promise<Ticket[]> {
+    round = await this.sanitizeRoundNumber(round);
     const ids = await this._contract.methods.getTickets(account, round).call();
     const data = await Promise.all(ids.map(id =>
         this._contract.methods.getTicket(round, parseInt(id, 10)).call()));
@@ -153,5 +147,13 @@ export class Lottery {
       player: account,
       numbers: numbers.map(number => parseInt(number, 10)),
     }));
+  }
+
+  public async getDrawnNumbers(round?: number): Promise<Draw> {
+    round = await this.sanitizeRoundNumber(round);
+    let numbers = await this._contract.methods.getDrawnNumbers(round).call();
+    numbers = numbers.map(number => parseInt(number, 10));
+    const date = new Date(Lottery._FIRST_DRAW_DATE.getTime() + round * 7 * 24 * 3600 * 1000);
+    return {date, round, numbers};
   }
 }
