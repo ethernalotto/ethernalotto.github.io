@@ -1,6 +1,6 @@
 {
   "name": "ethernalotto",
-  "version": "0.3.1",
+  "version": "0.3.3",
   "private": true,
   "dependencies": {
     "@ethernalotto/client": "^0.5.1",
@@ -13,7 +13,6 @@
     "react": "^18.1.0",
     "react-bootstrap": "^2.3.0",
     "react-dom": "^18.1.0",
-    "react-ga": "^3.3.0",
     "react-markdown": "^8.0.3",
     "react-mathjax-preview": "^2.2.6",
     "react-router-dom": "^6.3.0",

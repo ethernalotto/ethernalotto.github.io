@@ -12,8 +12,6 @@ import {
 
 import {Container} from 'react-bootstrap';
 
-import ReactGA from 'react-ga';
-
 import {useWeb3Context} from 'web3-react';
 
 import {Lottery} from './Lottery';
@@ -242,19 +240,13 @@ const MainBody = () => (
 );
 
 
-const App = () => {
-  useEffect(() => {
-    ReactGA.initialize(process.env.REACT_APP_ANALYTICS_TRACKER);
-    ReactGA.pageview(window.location.pathname + window.location.search);
-  }, []);
-  return (
-    <Router>
-      <ConnectionProvider>
-        <MainBody/>
-      </ConnectionProvider>
-    </Router>
-  );
-};
+const App = () => (
+  <Router>
+    <ConnectionProvider>
+      <MainBody/>
+    </ConnectionProvider>
+  </Router>
+);
 
 
 export default App;
