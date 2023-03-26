@@ -1,0 +1,31 @@
+{
+  "name": "@ethernalotto/goodbye",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "export": "next export",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@types/node": "18.15.7",
+    "@types/react": "18.0.28",
+    "@types/react-dom": "18.0.11",
+    "bootstrap": "^5.2.3",
+    "eslint": "8.36.0",
+    "eslint-config-next": "13.2.4",
+    "next": "13.2.4",
+    "nextjs-google-analytics": "^2.3.3",
+    "react": "18.2.0",
+    "react-bootstrap": "^2.7.2",
+    "react-dom": "18.2.0",
+    "typescript": "5.0.2"
+  },
+  "devDependencies": {
+    "react-markdown": "^8.0.6",
+    "remark-gfm": "^3.0.1",
+    "sass": "^1.60.0"
+  }
+}
